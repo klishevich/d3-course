@@ -7,7 +7,7 @@ const htmlPlugin = new HtmlWebPackPlugin({
 
 module.exports = {
   mode: 'development',
-  entry: './src/index.ts',
+  entry: './src/index',
   devtool: 'inline-source-map',
   module: {
     rules: [

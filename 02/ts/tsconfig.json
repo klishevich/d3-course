@@ -25,7 +25,7 @@
     "noUnusedParameters": true,
     "typeRoots": ["./src/typesDts"],
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true, // to make it work without * import React from 'react';
     "experimentalDecorators": false,
     "emitDecoratorMetadata": false
   }
