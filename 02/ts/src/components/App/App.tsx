@@ -1,5 +1,11 @@
 import React from "react";
+import LinePlot from "../LinePlot/LinePlot";
 
 export default function App() {
-  return <div>Empty Div! 777</div>;
+  return (
+    <div>
+      <div>App Root Div</div>
+      <LinePlot />
+    </div>
+  );
 }
