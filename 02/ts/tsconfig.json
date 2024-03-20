@@ -21,8 +21,8 @@
     "skipLibCheck": false,
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "typeRoots": ["./src/typesDts"],
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true, // to make it work without * import React from 'react';

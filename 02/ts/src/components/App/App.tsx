@@ -1,11 +1,11 @@
 import React from "react";
-import LinePlot from "../LinePlot/LinePlot";
+import TestLoadData from "../TestLoadData/TestLoadData";
 
 export default function App() {
   return (
     <div>
       <div>App Root Div</div>
-      <LinePlot />
+      <TestLoadData />
     </div>
   );
 }
