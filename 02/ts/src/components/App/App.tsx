@@ -1,11 +1,11 @@
 import React from "react";
-import TestLoadData from "../TestLoadData/TestLoadData";
+import TaskColumnHeight from "../TaskColumnHeight";
 
 export default function App() {
   return (
     <div>
       <div>App Root Div</div>
-      <TestLoadData />
+      <TaskColumnHeight />
     </div>
   );
 }
