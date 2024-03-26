@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { loadDataJSON } from "./loadData";
 import { createD3Chart } from "./createD3Chart";
 
-export default function Scales() {
+export default function ChartArea() {
   const chartDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,8 +20,8 @@ export default function Scales() {
     }
   }, []);
   return (
-    <div style={{ margin: 20 }}>
-      <h2>Scales</h2>
+    <div>
+      <h2>Chart Area</h2>
       <div ref={chartDivRef} />
     </div>
   );
