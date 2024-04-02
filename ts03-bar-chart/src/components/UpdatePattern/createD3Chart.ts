@@ -25,71 +25,86 @@ export function createD3Chart(data: IDataPoint[]): SVGSVGElement {
     .attr("text-anchor", "middle")
     .text("Star Break Coffee Financial Indicators");
 
-  const yLabel = g.append("text")
+  const yLabel = g
+    .append("text")
     .attr("class", "y-axis-label")
     .attr("x", -(CHART_HEIGHT / 2))
     .attr("y", -60)
     .attr("font-size", "20px")
     .attr("text-anchor", "middle")
-    .attr("transform", "rotate(-90)")
-
-  const monthArray = data.map((e) => e.month);
+    .attr("transform", "rotate(-90)");
 
   const xBarChartBandScale = d3.scaleBand().range([0, CHART_WIDTH]).paddingInner(0.3).paddingOuter(0.2);
   const yLinearScale = d3.scaleLinear().range([CHART_HEIGHT, 0]);
   const xAxisGroup = g.append("g").attr("class", "xAxis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
   const yAxisGroup = g.append("g").attr("class", "yAxis");
-  updateFunction();
+  updateFunction(data, isRevenue);
 
   d3.interval(() => {
     console.log("d3 interval");
-    updateFunction();
-  }, 3000);
+    const newData = isRevenue ? data : data.slice(1);
+    updateFunction(newData, isRevenue);
+    isRevenue = !isRevenue;
+  }, 5000);
   return svg.node()!;
 
-  function updateFunction(): void {
-    const indicator = isRevenue ? 'revenue' : 'profit';
+  function updateFunction(newData: IDataPoint[], isRevenue: boolean): void {
+    const indicator = isRevenue ? "revenue" : "profit";
+    const monthArray = newData.map((e) => e.month);
     xBarChartBandScale.domain(monthArray);
-    const yDomainMax = d3.max(data, (d: IDataPoint) => d[indicator])!;
+    const yDomainMax = d3.max(newData, (d: IDataPoint) => d[indicator])!;
     yLinearScale.domain([0, yDomainMax]);
 
     const xAxisCall = d3.axisBottom(xBarChartBandScale);
-    xAxisGroup.call(xAxisCall).selectAll("text").attr("text-anchor", "middle");
+    xAxisGroup.transition().duration(750).call(xAxisCall).selectAll("text").attr("text-anchor", "middle");
 
     const yAxisCall = d3
       .axisLeft(yLinearScale)
       .ticks(5)
       .tickFormat((d) => `$ ${d.toLocaleString()}`);
-    yAxisGroup.call(yAxisCall);
+    yAxisGroup.transition().duration(750).call(yAxisCall);
 
     // JOIN new data with old elements
-    const rects = g.selectAll("rect").data(data);
+    const rects = g.selectAll("rect").data(newData, d => (d as IDataPoint).month);
     console.log(111, "rects", JSON.stringify(rects));
 
     // EXIT old element not present in new data
-    rects.exit().remove();
+    rects
+      .exit()
+      .attr("fill", "#FF6F61")
+      // .transition().duration(750)
+      .attr("height", 0)
+      .attr("y", yLinearScale(0))
+      .remove();
     console.log(112, "rects", JSON.stringify(rects));
 
     // UPDATE old elements present in new data
     rects
+      // .transition().duration(750)
       .attr("x", (d): number => xBarChartBandScale(d.month)!)
       .attr("y", (d) => yLinearScale(d[indicator]))
       .attr("width", xBarChartBandScale.bandwidth)
       .attr("height", (d) => yLinearScale(0) - yLinearScale(d[indicator]));
-    console.log(113, "rects", JSON.stringify(rects));
+    // console.log(113, "rects", JSON.stringify(rects));
 
     // ENTER new elements present in new data
     rects
       .enter()
       .append("rect")
       .attr("x", (d): number => xBarChartBandScale(d.month)!)
-      .attr("y", (d) => yLinearScale(d[indicator]))
+      .attr("y", yLinearScale(0))
       .attr("width", xBarChartBandScale.bandwidth)
+      .attr("height", 0)
+      .attr("fill", "#FF6F61")
+      .attr("fill-opacity", "0")
+      .transition()
+      .duration(1000)
+      .attr("y", (d) => yLinearScale(d[indicator]))
       .attr("height", (d) => yLinearScale(0) - yLinearScale(d[indicator]))
-      .attr("fill", "#FF6F61");
+      .attr("fill-opacity", "1");
+
     console.log(114, "rects", JSON.stringify(rects));
 
     yLabel.text(`${isRevenue ? "Revenue" : "Profit"} (USD)`);
-    isRevenue = !isRevenue;
   }
 }
