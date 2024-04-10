@@ -55,9 +55,28 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
   const yAxisCall = d3.axisLeft(yLinearScale).ticks(5);
   yAxisGroup.call(yAxisCall);
 
-  const domainList = ["africa", "asia", "americas", "europe"];
+  const continentList = ["africa", "asia", "americas", "europe"];
   const rangeList = ["RED", "ORANGE", "BLUE", "GREEN", "GREEN", "GREY"];
-  const colorOrdinalScale = d3.scaleOrdinal().domain(domainList).range(rangeList);
+  const continentColorScale = d3.scaleOrdinal().domain(continentList).range(rangeList);
+
+  const legend = g.append("g").attr("transform", `translate(${CHART_WIDTH - 10}, ${CHART_HEIGHT - 150})`);
+  continentList.forEach((continent, index) => {
+    const legendRow = legend.append("g").attr("transform", `translate(0, ${index * 20})`);
+
+    legendRow
+      .append("rect")
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", continentColorScale(continent) as string);
+
+    legendRow
+      .append("text")
+      .attr("x", -10)
+      .attr("y", 10)
+      .attr("text-anchor", "end")
+      .style("text-transform", "capitalize")
+      .text(continent);
+  });
 
   let index = 0;
   updateFunction(data[index]);
@@ -96,7 +115,7 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
       .attr("cx", (d): number => xLogScale(d.income)!)
       .attr("cy", (d) => yLinearScale(d.life_exp))
       .attr("r", calcCircleRadius)
-      .style("fill", (d) => colorOrdinalScale(d.continent) as string)
+      .style("fill", (d) => continentColorScale(d.continent) as string)
       .style("opacity", 0.7);
 
     yearLabel.text(year);
