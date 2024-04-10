@@ -31,6 +31,8 @@ export async function loadData(): Promise<IYearInfo[]> {
   const fn = d3.json;
   const file = "./data.json";
 
+  // const whiteListedCountries = ["India", "United States", "France", "Egypt"]
+
   try {
     const response = (await fn(file)) as IYearInfoDto[];
     const filteredAndParsed = response.map((d) => {

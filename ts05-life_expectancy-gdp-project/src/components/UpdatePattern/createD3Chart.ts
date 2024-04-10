@@ -33,11 +33,20 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
     .attr("transform", "rotate(-90)")
     .text("Life Expectancy (Years)");
 
+  const yearLabel = g
+    .append("text")
+    .attr("class", "x-axis-year-label")
+    .attr("x", CHART_WIDTH)
+    .attr("y", CHART_HEIGHT - 20)
+    .attr("font-size", "60px")
+    .attr("text-anchor", "end")
+    .style("fill", "darkGrey");
+
   const xLogScale = d3.scaleLog([100, 150_000], [0, CHART_WIDTH]);
   const xAxisGroup = g.append("g").attr("class", "xAxis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
   const xAxisCall = d3
     .axisBottom(xLogScale)
-    .ticks(5)
+    .tickValues([400, 4_000, 40_000])
     .tickFormat((d) => `$ ${d.toLocaleString()}`);
   xAxisGroup.call(xAxisCall).selectAll("text").attr("text-anchor", "middle");
 
@@ -51,12 +60,15 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
   const colorOrdinalScale = d3.scaleOrdinal().domain(domainList).range(rangeList);
 
   let index = 0;
-  const dataLength = data.length;
   updateFunction(data[index]);
 
-  d3.interval(() => {
+  const intervalToken = d3.interval(() => {
     console.log("d3 interval");
-    index = (index + 1) % dataLength;
+    index++;
+    if (index >= data.length) {
+      intervalToken.stop();
+      return;
+    }
     updateFunction(data[index]);
   }, 100);
   return svg.node()!;
@@ -71,6 +83,8 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
 
     // UPDATE old elements present in new data
     circles
+      .transition()
+      .delay(100)
       .attr("cx", (d): number => xLogScale(d.income)!)
       .attr("cy", (d) => yLinearScale(d.life_exp))
       .attr("r", calcCircleRadius);
@@ -84,6 +98,8 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
       .attr("r", calcCircleRadius)
       .style("fill", (d) => colorOrdinalScale(d.continent) as string)
       .style("opacity", 0.7);
+
+    yearLabel.text(year);
   }
 }
 
