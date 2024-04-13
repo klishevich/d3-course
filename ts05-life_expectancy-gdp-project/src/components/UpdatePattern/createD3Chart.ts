@@ -1,12 +1,16 @@
 import * as d3 from "d3";
 import { ICountryInfo, IYearInfo } from "./loadData";
+import { ITooltipMethods } from "./createTooltip";
 
-export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
+export const DEFAULT_OPACITY = 0.7;
+
+export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods): SVGSVGElement {
   const SVG_WIDTH = 1200;
   const SVG_HEIGHT = 800;
-  const MARGIN = { LEFT: 100, RIGHT: 10, TOP: 10, BOTTOM: 60 };
+  const MARGIN = { LEFT: 200, RIGHT: 10, TOP: 10, BOTTOM: 60 };
   const CHART_WIDTH = SVG_WIDTH - MARGIN.LEFT - MARGIN.RIGHT;
   const CHART_HEIGHT = SVG_HEIGHT - MARGIN.TOP - MARGIN.BOTTOM;
+  const { mouseleave, mousemove, mouseover } = tooptipMethods;
 
   const svg = d3
     .create("svg")
@@ -82,7 +86,6 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
   updateFunction(data[index]);
 
   const intervalToken = d3.interval(() => {
-    console.log("d3 interval");
     index++;
     if (index >= data.length) {
       intervalToken.stop();
@@ -116,7 +119,10 @@ export function createD3Chart(data: IYearInfo[]): SVGSVGElement {
       .attr("cy", (d) => yLinearScale(d.life_exp))
       .attr("r", calcCircleRadius)
       .style("fill", (d) => continentColorScale(d.continent) as string)
-      .style("opacity", 0.7);
+      .style("opacity", DEFAULT_OPACITY)
+      .on("mouseover", mouseover)
+      .on("mousemove", mousemove)
+      .on("mouseleave", mouseleave);
 
     yearLabel.text(year);
   }

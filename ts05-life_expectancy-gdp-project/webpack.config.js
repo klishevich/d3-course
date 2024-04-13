@@ -30,7 +30,8 @@ module.exports = {
     htmlPlugin,
     new CopyPlugin({
       patterns: [
-          { from: 'data', to: '', toType: 'dir' }
+          { from: 'data', to: '', toType: 'dir' },
+          { from: 'src/styles', to: '', toType: 'dir' }
       ]
   }),
   ]
