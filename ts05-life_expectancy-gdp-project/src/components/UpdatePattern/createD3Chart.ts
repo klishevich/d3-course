@@ -2,21 +2,33 @@ import * as d3 from "d3";
 import { ICountryInfo, IYearInfo } from "./loadData";
 import { ITooltipMethods } from "./createTooltip";
 
+export interface IChartApi {
+  start: () => void;
+  stop: () => void;
+  next: () => void;
+  prev: () => void;
+  reset: () => void;
+  svg: SVGSVGElement;
+}
+
 export const DEFAULT_OPACITY = 0.7;
 
-export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods): SVGSVGElement {
+export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods): IChartApi {
   const SVG_WIDTH = 1200;
-  const SVG_HEIGHT = 800;
-  const MARGIN = { LEFT: 200, RIGHT: 10, TOP: 10, BOTTOM: 60 };
+  const SVG_HEIGHT = 700;
+  const MARGIN = { LEFT: 100, RIGHT: 10, TOP: 10, BOTTOM: 60 };
   const CHART_WIDTH = SVG_WIDTH - MARGIN.LEFT - MARGIN.RIGHT;
   const CHART_HEIGHT = SVG_HEIGHT - MARGIN.TOP - MARGIN.BOTTOM;
   const { mouseleave, mousemove, mouseover } = tooptipMethods;
+
+  let currentStep = 0;
+  let intervalToken: d3.Timer | undefined;
 
   const svg = d3
     .create("svg")
     .attr("width", SVG_WIDTH)
     .attr("height", SVG_HEIGHT)
-    .attr("style", "border:1px solid black");
+    .attr("style", "border:1px solid lightgrey");
 
   const g = svg.append("g").attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
@@ -82,20 +94,7 @@ export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods
       .text(continent);
   });
 
-  let index = 0;
-  updateFunction(data[index]);
-
-  const intervalToken = d3.interval(() => {
-    index++;
-    if (index >= data.length) {
-      intervalToken.stop();
-      return;
-    }
-    updateFunction(data[index]);
-  }, 100);
-  return svg.node()!;
-
-  function updateFunction(yearInfo: IYearInfo): void {
+  const updateFn = (yearInfo: IYearInfo): void => {
     const { year, countries } = yearInfo;
     // JOIN new data with old elements
     const circles = g.selectAll("circle").data(countries, (d) => (d as ICountryInfo).country);
@@ -125,7 +124,45 @@ export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods
       .on("mouseleave", mouseleave);
 
     yearLabel.text(year);
-  }
+  };
+
+  const nextStepFn = (): void => {
+    currentStep++;
+    if (currentStep >= data.length) {
+      currentStep = 0;
+    }
+    updateFn(data[currentStep]);
+  };
+
+  const startFn = (): void => {
+    if (!intervalToken) {
+      intervalToken = d3.interval(nextStepFn, 100);
+    }
+  };
+
+  const stopFn = (): void => {
+    if (intervalToken) {
+      intervalToken.stop();
+      intervalToken = undefined;
+    }
+  };
+
+  const prevStepFn = (): void => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateFn(data[currentStep]);
+    }
+  };
+
+  const resetFn = (): void => {
+    stopFn();
+    currentStep = 0;
+    updateFn(data[currentStep]);
+  };
+
+  updateFn(data[currentStep]);
+
+  return { svg: svg.node()!, start: startFn, stop: stopFn, reset: resetFn, next: nextStepFn, prev: prevStepFn };
 }
 
 function calcCircleRadius(d: ICountryInfo): number {
