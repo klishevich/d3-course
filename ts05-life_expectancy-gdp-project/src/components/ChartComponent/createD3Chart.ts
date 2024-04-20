@@ -8,18 +8,33 @@ export interface IChartApi {
   next: () => void;
   prev: () => void;
   reset: () => void;
+  setContinentFilter: (continent: string) => void;
+  setYear: (year: number) => void;
   svg: SVGSVGElement;
 }
 
 export const DEFAULT_OPACITY = 0.7;
+export const ALL_CONTINENTS = "all";
 
-export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods): IChartApi {
+export class ChartState {
+  public isRunning: boolean = false;
+  public year: number = 1800;
+  public continentFilter: string = ALL_CONTINENTS;
+}
+
+export function createD3Chart(
+  data: IYearInfo[],
+  tooptipMethods: ITooltipMethods,
+  setStateFn: (v: ChartState) => void
+): IChartApi {
   const SVG_WIDTH = 1200;
   const SVG_HEIGHT = 700;
   const MARGIN = { LEFT: 100, RIGHT: 10, TOP: 10, BOTTOM: 60 };
   const CHART_WIDTH = SVG_WIDTH - MARGIN.LEFT - MARGIN.RIGHT;
   const CHART_HEIGHT = SVG_HEIGHT - MARGIN.TOP - MARGIN.BOTTOM;
+  const START_YEAR = 1800;
   const { mouseleave, mousemove, mouseover } = tooptipMethods;
+  let currentContinentFilter = ALL_CONTINENTS;
 
   let currentStep = 0;
   let intervalToken: d3.Timer | undefined;
@@ -94,10 +109,21 @@ export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods
       .text(continent);
   });
 
-  const updateFn = (yearInfo: IYearInfo): void => {
+  const updateStateFn = () => {
+    const newState: ChartState = {
+      isRunning: intervalToken !== undefined,
+      year: currentStep + START_YEAR,
+      continentFilter: currentContinentFilter
+    };
+    setStateFn(newState);
+  };
+
+  const updateInternalFn = (yearInfo: IYearInfo, continentFilter: string): void => {
     const { year, countries } = yearInfo;
+    const filteredCountries =
+      continentFilter !== ALL_CONTINENTS ? countries.filter((c) => c.continent === continentFilter) : countries;
     // JOIN new data with old elements
-    const circles = g.selectAll("circle").data(countries, (d) => (d as ICountryInfo).country);
+    const circles = g.selectAll("circle").data(filteredCountries, (d) => (d as ICountryInfo).country);
 
     // EXIT old element not present in new data
     circles.exit().remove();
@@ -131,38 +157,75 @@ export function createD3Chart(data: IYearInfo[], tooptipMethods: ITooltipMethods
     if (currentStep >= data.length) {
       currentStep = 0;
     }
-    updateFn(data[currentStep]);
+    updateInternalFn(data[currentStep], currentContinentFilter);
+    updateStateFn();
   };
 
   const startFn = (): void => {
     if (!intervalToken) {
       intervalToken = d3.interval(nextStepFn, 100);
     }
+    updateStateFn();
   };
 
-  const stopFn = (): void => {
+  const stopInternalFn = (): void => {
     if (intervalToken) {
       intervalToken.stop();
       intervalToken = undefined;
     }
   };
 
-  const prevStepFn = (): void => {
-    if (currentStep > 0) {
-      currentStep--;
-      updateFn(data[currentStep]);
-    }
+  const stopFn = (): void => {
+    stopInternalFn();
+    updateStateFn();
   };
 
   const resetFn = (): void => {
-    stopFn();
+    stopInternalFn();
     currentStep = 0;
-    updateFn(data[currentStep]);
+    currentContinentFilter = ALL_CONTINENTS;
+    updateInternalFn(data[currentStep], currentContinentFilter);
+    updateStateFn();
   };
 
-  updateFn(data[currentStep]);
+  const prevStepFn = (): void => {
+    currentStep--;
+    if (currentStep < 0) {
+      currentStep = data.length - 1;
+    }
+    updateInternalFn(data[currentStep], currentContinentFilter);
+    updateStateFn();
+  };
 
-  return { svg: svg.node()!, start: startFn, stop: stopFn, reset: resetFn, next: nextStepFn, prev: prevStepFn };
+  const setContinentFilterFn = (val: string) => {
+    currentContinentFilter = val;
+    if (!intervalToken) {
+      updateInternalFn(data[currentStep], currentContinentFilter);
+    }
+    updateStateFn();
+  };
+
+  const setYearFn = (year: number) => {
+    currentStep = year - START_YEAR;
+    if (!intervalToken) {
+      updateInternalFn(data[currentStep], currentContinentFilter);
+    }
+    updateStateFn();
+  };
+
+  // Initial update
+  updateInternalFn(data[currentStep], currentContinentFilter);
+
+  return {
+    svg: svg.node()!,
+    next: nextStepFn,
+    start: startFn,
+    stop: stopFn,
+    reset: resetFn,
+    prev: prevStepFn,
+    setContinentFilter: setContinentFilterFn,
+    setYear: setYearFn
+  };
 }
 
 function calcCircleRadius(d: ICountryInfo): number {

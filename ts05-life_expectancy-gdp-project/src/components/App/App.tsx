@@ -1,8 +1,7 @@
 import React from "react";
 import CssBaseline from "@mui/material/CssBaseline";
-import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import UpdatePattern from "../UpdatePattern";
+import ChartComponent from "../ChartComponent";
 import MyAppBar from "../MyAppBar";
 
 export default function App() {
@@ -11,7 +10,7 @@ export default function App() {
       <CssBaseline />
       <Container maxWidth="xl">
         <MyAppBar />
-        <UpdatePattern />
+        <ChartComponent />
       </Container>
     </div>
   );
