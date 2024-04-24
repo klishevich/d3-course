@@ -9,13 +9,15 @@ import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Slider from "@mui/material/Slider";
 import { loadData } from "./loadData";
-import { IChartApi, createD3Chart, ALL_CONTINENTS, ChartState } from "./createD3Chart";
-import { createTooltip } from "./createTooltip";
+import { createD3Chart } from "./createD3Chart";
+import { ChartState } from "./ChartState";
+import { IChartApi } from "./IChartApi";
+import { ECurrency, currencyArray } from "./ECurrency";
+import { EIndicator, indicatorArray } from "./EIndicator";
 
 export default function ChartComponent() {
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [chartApi, setChartApi] = useState<IChartApi>();
-  const [isRunning, setIsRunning] = useState<boolean>(false);
   const [chartState, setChartState] = useState(new ChartState());
 
   useEffect(() => {
@@ -24,62 +26,65 @@ export default function ChartComponent() {
       (async () => {
         const data = await loadData();
         console.log('data', data);
-        // if (chartContainer.hasChildNodes()) chartContainer.innerHTML = "";
-        // const tooltipMethods = createTooltip(chartContainer);
-        // const width = chartContainer.offsetWidth;
-        // const chartApi$ = createD3Chart(data, width, tooltipMethods, setChartState);
-        // chartContainer.append(chartApi$.svg);
-        // setChartApi(chartApi$);
+        if (chartContainer.hasChildNodes()) chartContainer.innerHTML = "";
+        const width = chartContainer.offsetWidth;
+        const chartApi$ = createD3Chart(data, width, setChartState);
+        chartContainer.append(chartApi$.svg);
+        setChartApi(chartApi$);
       })();
     }
   }, []);
 
-  const handleStartToggle = (): void => {
-    if (isRunning) {
-      chartApi?.stop();
-    } else {
-      chartApi?.start();
-    }
-    setIsRunning(!isRunning);
+
+  const handleCurrencyChange = (event: SelectChangeEvent) => {
+    const newVal = event.target.value as ECurrency;
+    chartApi?.selectCurrency(newVal);
   };
 
-  const handleContinentFilterChange = (event: SelectChangeEvent) => {
-    const newVal = event.target.value as string;
-    chartApi?.setContinentFilter(newVal);
+  const handleIndicatorChange = (event: SelectChangeEvent) => {
+    const newVal = event.target.value as EIndicator;
+    chartApi?.selectIndicator(newVal);
   };
 
   const handleSliderChange = (_e: Event, value: number | number[]) => {
-    chartApi?.setYear(value as number);
+    const [min, max] = value as number[];
+    chartApi?.setMinMax(min, max);
   };
 
   return (
     <div>
       <Typography variant="h2" gutterBottom>
-        Life Expectancy vs GDP visualization
+        Crypto Line Chart
       </Typography>
       <div style={{ display: "flex" }}>
-        <ButtonGroup variant="contained" aria-label="Basic button group">
-          <Button onClick={handleStartToggle}>Start / Stop</Button>
-          <Button onClick={chartApi?.prev}>Prev</Button>
-          <Button onClick={chartApi?.next}>Next</Button>
-          <Button onClick={chartApi?.reset}>Reset</Button>
-        </ButtonGroup>
         <div style={{ marginLeft: 10 }}>
           <Box sx={{ minWidth: 200 }}>
             <FormControl variant="standard" fullWidth>
-              <InputLabel id="continent-select-label">Continent</InputLabel>
+              <InputLabel id="currency-select-label">Currency</InputLabel>
               <Select
-                labelId="continent-select-label"
-                id="continent-select"
-                value={chartState.continentFilter}
-                label="Continent"
-                onChange={handleContinentFilterChange}
+                labelId="currency-select-label"
+                id="currency-select"
+                value={chartState.currency}
+                label="Currency"
+                onChange={handleCurrencyChange}
               >
-                <MenuItem value={ALL_CONTINENTS}>All</MenuItem>
-                <MenuItem value="africa">Africa</MenuItem>
-                <MenuItem value="americas">Americas</MenuItem>
-                <MenuItem value="asia">Asia</MenuItem>
-                <MenuItem value="europe">Europe</MenuItem>
+                {currencyArray.map(e => <MenuItem key={e[1]} value={e[1]}>`${e[0]}`</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Box>
+        </div>
+        <div style={{ marginLeft: 10 }}>
+          <Box sx={{ minWidth: 200 }}>
+            <FormControl variant="standard" fullWidth>
+              <InputLabel id="indicator-select-label">Indicator</InputLabel>
+              <Select
+                labelId="indicator-select-label"
+                id="indicator-select"
+                value={chartState.indicator}
+                label="Indicator"
+                onChange={handleIndicatorChange}
+              >
+                {indicatorArray.map(e => <MenuItem key={e[1]} value={e[1]}>`${e[0]}`</MenuItem>)}
               </Select>
             </FormControl>
           </Box>
@@ -87,12 +92,12 @@ export default function ChartComponent() {
         <div style={{ marginLeft: 20, paddingTop: 10 }}>
           <Box sx={{ width: 300 }}>
             <Slider
-              aria-label="Year"
-              value={chartState.year}
+              aria-label="Period"
+              value={[chartState.dateMin, chartState.dateMax]}
               valueLabelDisplay="on"
               step={1}
-              min={1800}
-              max={2014}
+              min={chartState.dateMin}
+              max={chartState.dateMax}
               onChange={handleSliderChange}
             />
           </Box>
