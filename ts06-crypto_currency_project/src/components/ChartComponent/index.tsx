@@ -14,6 +14,7 @@ import { ChartState } from "./ChartState";
 import { IChartApi } from "./IChartApi";
 import { ECurrency, currencyArray } from "./ECurrency";
 import { EIndicator, indicatorArray } from "./EIndicator";
+import { dateFormatter } from "./dateFormatter";
 
 export default function ChartComponent() {
   const chartDivRef = useRef<HTMLDivElement>(null);
@@ -21,20 +22,18 @@ export default function ChartComponent() {
   const [chartState, setChartState] = useState(new ChartState());
 
   useEffect(() => {
-    const chartContainer = chartDivRef.current;
-    if (chartContainer) {
+    const chartDiv = chartDivRef.current;
+    if (chartDiv) {
       (async () => {
         const data = await loadData();
-        console.log('data', data);
-        if (chartContainer.hasChildNodes()) chartContainer.innerHTML = "";
-        const width = chartContainer.offsetWidth;
+        if (chartDiv.hasChildNodes()) chartDiv.innerHTML = "";
+        const width = chartDiv.offsetWidth;
         const chartApi$ = createD3Chart(data, width, setChartState);
-        chartContainer.append(chartApi$.svg);
+        chartDiv.append(chartApi$.svg);
         setChartApi(chartApi$);
       })();
     }
   }, []);
-
 
   const handleCurrencyChange = (event: SelectChangeEvent) => {
     const newVal = event.target.value as ECurrency;
@@ -53,9 +52,23 @@ export default function ChartComponent() {
 
   return (
     <div>
-      <Typography variant="h2" gutterBottom>
+      {/* <Typography variant="h2" gutterBottom>
         Crypto Line Chart
-      </Typography>
+      </Typography> */}
+      <div style={{ marginLeft: 40, paddingTop: 20 }}>
+        <Box sx={{ width: 300 }}>
+          <Slider
+            getAriaLabel={(index) => (index === 0 ? "Min" : "Max")}
+            value={[chartState.curDateMin, chartState.curDateMax]}
+            valueLabelDisplay="auto"
+            step={1}
+            min={chartState.dateMin}
+            max={chartState.dateMax}
+            onChange={handleSliderChange}
+            valueLabelFormat={(val) => <span>{dateFormatter(val)}</span>}
+          />
+        </Box>
+      </div>
       <div style={{ display: "flex" }}>
         <div style={{ marginLeft: 10 }}>
           <Box sx={{ minWidth: 200 }}>
@@ -68,7 +81,11 @@ export default function ChartComponent() {
                 label="Currency"
                 onChange={handleCurrencyChange}
               >
-                {currencyArray.map(e => <MenuItem key={e[1]} value={e[1]}>`${e[0]}`</MenuItem>)}
+                {currencyArray.map((e) => (
+                  <MenuItem key={e[1]} value={e[1]}>
+                    {e[0]}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
@@ -84,22 +101,13 @@ export default function ChartComponent() {
                 label="Indicator"
                 onChange={handleIndicatorChange}
               >
-                {indicatorArray.map(e => <MenuItem key={e[1]} value={e[1]}>`${e[0]}`</MenuItem>)}
+                {indicatorArray.map((e) => (
+                  <MenuItem key={e[1]} value={e[1]}>
+                    {e[0]}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
-          </Box>
-        </div>
-        <div style={{ marginLeft: 20, paddingTop: 10 }}>
-          <Box sx={{ width: 300 }}>
-            <Slider
-              aria-label="Period"
-              value={[chartState.dateMin, chartState.dateMax]}
-              valueLabelDisplay="on"
-              step={1}
-              min={chartState.dateMin}
-              max={chartState.dateMax}
-              onChange={handleSliderChange}
-            />
           </Box>
         </div>
       </div>

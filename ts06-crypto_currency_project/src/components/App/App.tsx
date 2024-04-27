@@ -8,8 +8,10 @@ export default function App() {
   return (
     <div>
       <CssBaseline />
-      <Container maxWidth="xl">
+      <Container maxWidth="lg" disableGutters={true}>
         <MyAppBar />
+      </Container>
+      <Container maxWidth="lg">
         <ChartComponent />
       </Container>
     </div>
