@@ -55,8 +55,8 @@ export default function ChartComponent() {
       {/* <Typography variant="h2" gutterBottom>
         Crypto Line Chart
       </Typography> */}
-      <div style={{ marginLeft: 40, paddingTop: 20 }}>
-        <Box sx={{ width: 300 }}>
+      <div style={{ paddingTop: 20 }}>
+        <Box sx={{ width: "100%" }}>
           <Slider
             getAriaLabel={(index) => (index === 0 ? "Min" : "Max")}
             value={[chartState.curDateMin, chartState.curDateMax]}

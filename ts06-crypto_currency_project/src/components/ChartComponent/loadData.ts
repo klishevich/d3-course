@@ -23,7 +23,7 @@ export async function loadData(): Promise<TCoinDataSet> {
         date: parseDate(r.date)!.getTime(),
         vol24: parseInt(r["24h_vol"] ?? "0"),
         market_cap: parseInt(r.market_cap ?? "0"),
-        price_usd: parseInt(r.price_usd ?? "0")
+        price_usd: parseFloat(r.price_usd ?? "0")
       }));
       result[key] = coinRecords;
     }
