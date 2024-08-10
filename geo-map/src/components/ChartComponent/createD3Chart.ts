@@ -6,6 +6,7 @@ import { dateFormatter } from "./dateFormatter";
 import { ECurrency } from "./ECurrency";
 import { EIndicator } from "./EIndicator";
 import { worldGeojson } from "./worldGeojson";
+import { koreaGeoJson } from "./koreaGeoJson";
 import { TGeoJsonDto } from "./TGeoJsonDto";
 
 export const DEFAULT_OPACITY = 0.7;
@@ -83,48 +84,38 @@ function initializeChart(
 ): void {
   const width = chartWidth;
   const height = chartHeight;
-  const projection = d3.geoEqualEarth();
+  // Mercator Projection represents North as Up and South as Down
+  const projection = d3.geoMercator();// geoEqualEarth();
   const bb = data;
-  projection.fitSize([width, height], bb);
+  // projection.fitSize([width, height], bb);
+  projection.fitExtent([[-width, -height], [2*width, 2*height]], bb);
+  const currentScale = projection.scale();
+  console.log('currentScale', currentScale);
+  const currentCenter = projection.center();
+  console.log('currentCenter', currentCenter);
+  // projection.scale(currentScale * 0.95);
   const geoGenerator = d3.geoPath().projection(projection);
 
-  g.append('g').selectAll('path')
-  .data(bb.features)
-  .join('path')
-  .attr('d', geoGenerator)
+  g.append('g').selectAll('path').data(bb.features).join('path').attr('d', geoGenerator)
   .attr('fill', '#088')
   .attr('stroke', '#000');
-  // const currency = ECurrency.Bitcoin;
-  // const indicator = EIndicator.PriceUsd;
 
-  // const coinData = data;
+  const zoomFn = d3.zoom()
+  .on("zoom", () => {
+    console.log('zooming');
+    // @ts-ignore
+    const currentZoomLevel: number = d3.zoomTransform(g).k;
+    console.log('d3.zoomTransform(g).k', currentZoomLevel); // get current zoom state             
+    // projection.scale(currentZoomLevel*2); // set scale and translate of projection.
 
-  // const { xMin, xMax, yMin, yMax } = calcMinMax(coinData, indicator);
+    // // redraw the features
+    // const geoGenerator = d3.geoPath().projection(projection);
+    // g.append('g').selectAll('path').data(bb.features).join('path').attr('d', geoGenerator)
+  })
 
-  // const xAxisGroupSelection = g.append("g").attr("class", "xAxis").attr("transform", `translate(0, ${chartHeight})`);
-  // const xLinearScale = updateXAxis(chartWidth, xAxisGroupSelection, xMin, xMax);
-
-  // const yAxisGroupSelection = g.append("g").attr("class", "yAxis");
-  // const yLinearScale = updateYAxis(chartHeight, yAxisGroupSelection, yMin, yMax);
-
-  // const lineChartSelection = g
-  //   .append("path")
-  //   .attr("fill", "none")
-  //   .attr("stroke", "steelblue")
-  //   .attr("stroke-width", 1.5);
-  // updateLineChart(lineChartSelection, coinData, indicator, xLinearScale, yLinearScale);
-
-  // const chartState = new ChartState({
-  //   indicator,
-  //   currency,
-  //   dateMin: xMin,
-  //   dateMax: xMax,
-  //   curDateMin: xMin,
-  //   curDateMax: xMax,
-  //   yMin,
-  //   yMax
-  // });
-
+  // @ts-ignore
+  g.call(zoomFn);
+  
   // return { chartState, xAxisGroupSelection, yAxisGroupSelection, lineChartSelection };
 }
 
@@ -143,22 +134,22 @@ export function createD3Chart(width: number): IChartApi {
 
   const g = svg.append("g").attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
-  g.append("text")
-    .attr("class", "x-axis-label")
-    .attr("x", CHART_WIDTH / 2)
-    .attr("y", SVG_HEIGHT - 20)
-    .attr("font-size", "20px")
-    .attr("text-anchor", "middle")
-    .text("Time");
+  // g.append("text")
+  //   .attr("class", "x-axis-label")
+  //   .attr("x", CHART_WIDTH / 2)
+  //   .attr("y", SVG_HEIGHT - 20)
+  //   .attr("font-size", "20px")
+  //   .attr("text-anchor", "middle")
+  //   .text("Time");
 
-  g.append("text")
-    .attr("class", "y-axis-label")
-    .attr("x", -(CHART_HEIGHT / 2))
-    .attr("y", -60)
-    .attr("font-size", "20px")
-    .attr("text-anchor", "middle")
-    .attr("transform", "rotate(-90)")
-    .text("Price (USD)");
+  // g.append("text")
+  //   .attr("class", "y-axis-label")
+  //   .attr("x", -(CHART_HEIGHT / 2))
+  //   .attr("y", -60)
+  //   .attr("font-size", "20px")
+  //   .attr("text-anchor", "middle")
+  //   .attr("transform", "rotate(-90)")
+  //   .text("Price (USD)");
 
   // const data: Array<TCoinRecord> = [
   //   {
@@ -181,7 +172,7 @@ export function createD3Chart(width: number): IChartApi {
   //   }
   // ];
 
-  const data = worldGeojson;
+  const data = koreaGeoJson;
 
   const res = initializeChart(g, data, CHART_WIDTH, CHART_HEIGHT);
 
